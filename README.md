@@ -6,7 +6,7 @@
 [![Report an issue](https://img.shields.io/badge/Support-Issues-green)](https://github.com/tquangdo/docker-all-presentation/issues/new)
 
 ## reference
-[youtube](https://www.youtube.com/watch?v=o7s-eigrMAI&list=PL9nWRykSBSFihWbXBDX57EdpOmZxpUaVR&index=2)
+[tinhocthatladongian](https://www.youtube.com/watch?v=q3Vhi_MvUsQ&list=PLjCpH2Qpki-sTjdlYXE8AifSKQFa8ZL23&index=27)
 
 ## overall
 1. ### run from other image in docker hub
@@ -85,3 +85,68 @@
     {"ServerURL":"https://index.docker.io/v1/","Username":"jwmagazineeas","Secret":"..."}
     {"ServerURL":"https://registry.heroku.com","Username":"_","Secret":"..."}
     ```
+1. ### pull & push in docker hub
+    1. #### src code
+        - `overall/Dockerfile` & `overall/index.html`
+    1. #### local
+        ```shell
+        overall$ docker build -t img-nginx-demo .
+        docker images # will see "img-nginx-demo"
+        docker run -d --name cont-nginx-demo -p 8080:80 img-nginx-demo
+        docker ps # will see "cont-nginx-demo"
+        ```
+        - access `localhost:8080` on browser -> "DTQ!!!"
+    1. #### push docker hub
+        1. ##### create new repo in docker hub
+        - create repo `dockrepo-nginx-demo` in docker hub
+        ```shell
+        docker tag img-nginx-demo jwmagazineeas/dockrepo-nginx-demo:v1
+        docker push jwmagazineeas/dockrepo-nginx-demo:v1
+        ```
+        ![pushv1](screenshots/pushv1.png)
+        1. ##### NO need to create new repo in docker hub
+        ```shell
+        docker ps
+        =>
+        CONTAINER ID   IMAGE          COMMAND                  CREATED       STATUS       PORTS                  NAMES
+        0509bea79b68   f5ed82203f09   "/docker-entrypoint.…"   3 hours ago   Up 3 hours   0.0.0.0:8080->80/tcp   cont-nginx-demo
+        docker images
+        =>
+        REPOSITORY                          TAG       IMAGE ID       CREATED          SIZE
+        jwmagazineeas/dockrepo-nginx-del    1.0       27fe34b66905   21 seconds ago   142MB
+        docker commit -m "test docker commit CMD" -a "DoTQ" 0509bea79b68 jwmagazineeas/dockrepo-nginx-del:1.0
+        docker push jwmagazineeas/dockrepo-nginx-del:1.0
+        ```
+        - will auto create repo `dockrepo-nginx-del` in docker hub
+        ![pushdel](screenshots/pushdel.png)
+        - delete containers & images
+    1. #### pull docker hub
+        ```shell
+        docker pull jwmagazineeas/dockrepo-nginx-demo:v1
+        docker images
+        =>
+        REPOSITORY                          TAG       IMAGE ID       CREATED          SIZE
+        jwmagazineeas/dockrepo-nginx-demo   v1        262b11cf5916   14 minutes ago   142MB
+        docker run -d --name cont-nginx-demo -p 8080:80 262b11cf5916
+        docker ps # will see "cont-nginx-demo"
+        ```
+        - access `localhost:8080` on browser -> "DTQ!!!"
+    1. #### push v2 docker hub
+        - change `overall/index.html: DTQ V2!!!`
+        ```shell
+        docker build -t img-nginx-demo:v2 .
+        docker images # will see "img-nginx-demo > v2"
+        ```
+        - test local before pushing
+        ```shell
+        docker run -d --name cont-nginx-demo -p 8080:80 img-nginx-demo:v2
+        docker ps # will see "cont-nginx-demo"
+        ```
+        - access `localhost:8080` on browser -> "DTQ v2!!!"
+        - push
+        ```shell
+        docker tag img-nginx-demo:v2 jwmagazineeas/dockrepo-nginx-demo:v2
+        docker push jwmagazineeas/dockrepo-nginx-demo:v2
+        ```
+        ![pushv2](screenshots/pushv2.png)
+        - delete containers & images

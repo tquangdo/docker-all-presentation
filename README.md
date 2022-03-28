@@ -98,28 +98,28 @@
         - access `localhost:8080` on browser -> "DTQ!!!"
     1. #### push docker hub
         1. ##### create new repo in docker hub
-        - create repo `dockrepo-nginx-demo` in docker hub
-        ```shell
-        docker tag img-nginx-demo jwmagazineeas/dockrepo-nginx-demo:v1
-        docker push jwmagazineeas/dockrepo-nginx-demo:v1
-        ```
-        ![pushv1](screenshots/pushv1.png)
+            - create repo `dockrepo-nginx-demo` in docker hub
+            ```shell
+            docker tag img-nginx-demo jwmagazineeas/dockrepo-nginx-demo:v1
+            docker push jwmagazineeas/dockrepo-nginx-demo:v1
+            ```
+            ![pushv1](screenshots/pushv1.png)
         1. ##### NO need to create new repo in docker hub
-        ```shell
-        docker ps
-        =>
-        CONTAINER ID   IMAGE          COMMAND                  CREATED       STATUS       PORTS                  NAMES
-        0509bea79b68   f5ed82203f09   "/docker-entrypoint.…"   3 hours ago   Up 3 hours   0.0.0.0:8080->80/tcp   cont-nginx-demo
-        docker images
-        =>
-        REPOSITORY                          TAG       IMAGE ID       CREATED          SIZE
-        jwmagazineeas/dockrepo-nginx-del    1.0       27fe34b66905   21 seconds ago   142MB
-        docker commit -m "test docker commit CMD" -a "DoTQ" 0509bea79b68 jwmagazineeas/dockrepo-nginx-del:1.0
-        docker push jwmagazineeas/dockrepo-nginx-del:1.0
-        ```
-        - will auto create repo `dockrepo-nginx-del` in docker hub
-        ![pushdel](screenshots/pushdel.png)
-        - delete containers & images
+            ```shell
+            docker ps
+            =>
+            CONTAINER ID   IMAGE          COMMAND                  CREATED       STATUS       PORTS                  NAMES
+            0509bea79b68   f5ed82203f09   "/docker-entrypoint.…"   3 hours ago   Up 3 hours   0.0.0.0:8080->80/tcp   cont-nginx-demo
+            docker images
+            =>
+            REPOSITORY                          TAG       IMAGE ID       CREATED          SIZE
+            jwmagazineeas/dockrepo-nginx-del    1.0       27fe34b66905   21 seconds ago   142MB
+            docker commit -m "test docker commit CMD" -a "DoTQ" 0509bea79b68 jwmagazineeas/dockrepo-nginx-del:1.0
+            docker push jwmagazineeas/dockrepo-nginx-del:1.0
+            ```
+            - will auto create repo `dockrepo-nginx-del` in docker hub
+            ![pushdel](screenshots/pushdel.png)
+            - delete containers & images
     1. #### pull docker hub
         ```shell
         docker pull jwmagazineeas/dockrepo-nginx-demo:v1

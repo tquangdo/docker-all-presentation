@@ -8,9 +8,29 @@
 ## reference
 [tinhocthatladongian](https://www.youtube.com/watch?v=q3Vhi_MvUsQ&list=PLjCpH2Qpki-sTjdlYXE8AifSKQFa8ZL23&index=27)
 
+## definition
+1. ### image 
+    - đơn vị cơ bản nhất, từ image tạo container
+    - share image trên `hub.docker.com`
+1. ### container 
+    - ý nghĩa giống 1 instance của máy ảo
+    - share resource cho nhau: VD 10 containers cùng xài Linux+MySQL+Nginx thì 3 resource này chỉ chiếm 1 lần chứ ko phải chiếm 10 lần trên bộ nhớ host! 
+1. ### container 
+    - ý nghĩa giống S3 hay EFS
+    - nếu KO xài volume thì xoá container sẽ mất all data!!! (stop/start OK)
+
 ## overall
 1. ### run other image in docker hub
-    1. #### by privileged (OK)
+    1. #### by run/container run (OK)
+        - `docker container run --name cont-mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql` => connect OK by Workbench
+        - `docker run --name cont-apache -p 8081:80 -d httpd` => connect OK by `localhost:8081`
+        ```shell
+        docker exec -it da517a963ef1 bash
+        cat /usr/local/apache2/htdocs/index.html
+        => 
+        <html><body><h1>It works!</h1></body></html>
+        ```
+    1. #### by run privileged (OK)
         - run privileged
         ```shell
         docker run --privileged -d -p 8080:80 tinhocthatladongian/project01  /sbin/init 
@@ -53,7 +73,7 @@
         ```shell
         cat ~/Library/Group\ Containers/group.com.docker/settings.json | grep deprecatedCgroupv1 # "deprecatedCgroupv1": true,
         ```
-1. ### login
+1. ### login docker hub
     - already login
     ```shell
     cat ~/.docker/config.json | grep docker.io # "https://index.docker.io/v1/": {},
@@ -168,7 +188,7 @@
 ## docker-compose
 1. ### reference
     [example-voting-app](https://github.com/dockersamples/example-voting-app)
-    - change code FROM port `5000` TO `5005`
+    - change code FROM port `5000` TO `5005` (because macOS use default `5000` for other purpose)
     ```shell
     docker-compose up --build
     =>
@@ -183,7 +203,95 @@
     ![vote](screenshots/vote.png)
 1. ### src code
     - `docker-compose/docker-compose.yml` & `docker-compose/Dockerfile`
-    - ⚠️⚠️⚠️ IMPORTANT ⚠️⚠️⚠️: due to httpd, MUST expose port=`80`, otherwise will ERR "Failed to get D-Bus connection"
+    - ⚠️⚠️⚠️ IMPORTANT ⚠️⚠️⚠️: due to httpd, MUST expose port=`80` in `Dockerfile`, otherwise will ERR "Failed to get D-Bus connection"
 1. ### run
     - access `localhost:8089/index.php` on browser
     ![compose](screenshots/compose.png)
+
+## volume & NW
+1. ### volume
+    1. #### create & run container from volume
+        - create volume
+        ```shell
+        docker volume create vol-hello
+        docker volume inspect vol-hello
+        =>
+        [
+            {
+                "CreatedAt": "2022-03-29T03:17:06Z",
+                "Driver": "local",
+                "Labels": {},
+                "Mountpoint": "/var/lib/docker/volumes/vol-hello/_data", # in macos: "~/Library/Containers/com.docker.docker/Data/vms/0"
+                "Name": "vol-hello",
+                "Options": {},
+                "Scope": "local"
+            }
+        ]
+        ```
+        - access to volume in macos
+        ```shell
+        docker run -it --privileged --pid=host debian nsenter -t 1 -m -u -n -i sh
+        @ echo "DoTQ!!!" > /var/lib/docker/volumes/vol-hello/_data/index.html
+        docker images
+        =>
+        REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+        debian       latest    d69c6cd3a20d   3 hours ago   124MB
+        docker ps -a
+        =>
+        CONTAINER ID   IMAGE     COMMAND                  CREATED              STATUS                      PORTS                  NAMES
+        df1483ad42a5   debian    "nsenter -t 1 -m -u …"   6 minutes ago        Exited (0) 18 seconds ago                          silly_mcnulty
+        ```
+        - create & run container: `docker run --name cont-hello -p 8081:80 -v vol-hello:/usr/local/apache2/htdocs -d httpd`
+        - access `localhost:8081` on browser => see "DoTQ!!!"
+        - delete containers & images
+        - check volume
+         ```shell
+        docker volume ls
+        =>
+        DRIVER    VOLUME NAME
+        local     vol-hello
+        ```
+        - create & run container again > access `localhost:8081` on browser => see "DoTQ!!!"
+    1. #### xoá container sẽ mất all data!!! (stop/start OK)
+        - create container
+        ```shell
+        docker container run --name cont-mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql
+        docker ps
+        =>
+        CONTAINER ID   IMAGE     COMMAND                  CREATED         STATUS         PORTS                               NAMES
+        02f44cbc9f7d   mysql     "docker-entrypoint.s…"   8 minutes ago   Up 2 seconds   0.0.0.0:3306->3306/tcp, 33060/tcp   cont-mysql
+        ```
+        - delete container & create again => lose all data!!!
+        - add volume: `docker container run --name cont-mysql -v <vol-name!!!>:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql`
+1. ### NW
+    - list: default=`bridge`
+    ```shell
+    docker network ls
+    =>
+    NETWORK ID     NAME      DRIVER    SCOPE
+    76539fb188bb   bridge    bridge    local
+    68f186ebc286   host      host      local
+    46d403aa3fbc   none      null      local
+    ```
+    - inspect `bridge`
+    ```shell
+    docker network inspect bridge
+    =>
+    ...
+    "Name": "cont-apache",
+    "EndpointID": "xxx",
+    "MacAddress": "02:42:ac:11:00:02",
+    "IPv4Address": "172.17.0.2/16",
+    ```
+    > different from host IP
+    ```shell
+    ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\  -f2
+    => 192.168.0.5
+    ```
+
+    - inspect `host`: `docker network inspect host | grep IPv4Address` => blank!
+
+## note
+ ```shell
+docker rm -f $(docker ps -a -q) && docker rmi -f $(docker images -a -q) && docker volume rm $(docker volume ls)
+```

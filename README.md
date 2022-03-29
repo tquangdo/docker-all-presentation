@@ -22,8 +22,8 @@
 ## overall
 1. ### run other image in docker hub
     1. #### by run/container run (OK)
-        - `docker container run --name cont-mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql` => connect OK by Workbench
-        - `docker run --name cont-apache -p 8081:80 -d httpd` => connect OK by `localhost:8081`
+        - `docker run --name cont-mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql` => connect OK by Workbench
+        - `docker run --name cont-apache -p 8081:80 -d httpd` => connect OK by `localhost:8081` on browser
         ```shell
         docker exec -it da517a963ef1 bash
         cat /usr/local/apache2/htdocs/index.html
@@ -186,27 +186,29 @@
         - delete containers & images
 
 ## docker-compose
-1. ### reference
-    [example-voting-app](https://github.com/dockersamples/example-voting-app)
-    - change code FROM port `5000` TO `5005` (because macOS use default `5000` for other purpose)
-    ```shell
-    docker-compose up --build
-    =>
-    ...
-    Creating example-voting-app_redis_1 ... done
-    Creating example-voting-app_db_1    ... done
-    Creating example-voting-app_vote_1   ... done
-    Creating example-voting-app_worker_1 ... done
-    Creating example-voting-app_result_1 ... done
-    ```
-    - access `localhost:5005` for voting & `localhost:5001` for result
-    ![vote](screenshots/vote.png)
-1. ### src code
-    - `docker-compose/docker-compose.yml` & `docker-compose/Dockerfile`
-    - ⚠️⚠️⚠️ IMPORTANT ⚠️⚠️⚠️: due to httpd, MUST expose port=`80` in `Dockerfile`, otherwise will ERR "Failed to get D-Bus connection"
-1. ### run
-    - access `localhost:8089/index.php` on browser
-    ![compose](screenshots/compose.png)
+1. ### apache & phpinfo
+    1. ### reference
+        [example-voting-app](https://github.com/dockersamples/example-voting-app)
+        - change code FROM port `5000` TO `5005` (because macOS use default `5000` for other purpose)
+        ```shell
+        docker-compose up --build
+        =>
+        ...
+        Creating example-voting-app_redis_1 ... done
+        Creating example-voting-app_db_1    ... done
+        Creating example-voting-app_vote_1   ... done
+        Creating example-voting-app_worker_1 ... done
+        Creating example-voting-app_result_1 ... done
+        ```
+        - access `localhost:5005` for voting & `localhost:5001` for result
+        ![vote](screenshots/vote.png)
+    1. ### src code
+        - `docker-compose/docker-compose.yml` & `docker-compose/Dockerfile`
+        - ⚠️⚠️⚠️ IMPORTANT ⚠️⚠️⚠️: due to httpd, MUST expose port=`80` in `Dockerfile`, otherwise will ERR "Failed to get D-Bus connection"
+    1. ### run
+        - access `localhost:8089/index.php` on browser
+        ![compose](screenshots/compose.png)
+1. ### wordpress
 
 ## volume & NW
 1. ### volume
@@ -255,41 +257,131 @@
     1. #### xoá container sẽ mất all data!!! (stop/start OK)
         - create container
         ```shell
-        docker container run --name cont-mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql
+        docker run --name cont-mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql
         docker ps
         =>
         CONTAINER ID   IMAGE     COMMAND                  CREATED         STATUS         PORTS                               NAMES
         02f44cbc9f7d   mysql     "docker-entrypoint.s…"   8 minutes ago   Up 2 seconds   0.0.0.0:3306->3306/tcp, 33060/tcp   cont-mysql
         ```
         - delete container & create again => lose all data!!!
-        - add volume: `docker container run --name cont-mysql -v <vol-name!!!>:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql`
+        - add volume: `docker run --name cont-mysql -v <vol-name!!!>:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql`
 1. ### NW
-    - list: default=`bridge`
-    ```shell
-    docker network ls
-    =>
-    NETWORK ID     NAME      DRIVER    SCOPE
-    76539fb188bb   bridge    bridge    local
-    68f186ebc286   host      host      local
-    46d403aa3fbc   none      null      local
-    ```
-    - inspect `bridge`
-    ```shell
-    docker network inspect bridge
-    =>
-    ...
-    "Name": "cont-apache",
-    "EndpointID": "xxx",
-    "MacAddress": "02:42:ac:11:00:02",
-    "IPv4Address": "172.17.0.2/16",
-    ```
-    > different from host IP
-    ```shell
-    ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\  -f2
-    => 192.168.0.5
-    ```
+    1. #### theory
+        - list: default=`bridge`
+        ```shell
+        docker network ls
+        =>
+        NETWORK ID     NAME      DRIVER    SCOPE
+        76539fb188bb   bridge    bridge    local
+        68f186ebc286   host      host      local
+        46d403aa3fbc   none      null      local
+        ```
+        - inspect `bridge`
+        ```shell
+        docker network inspect bridge
+        =>
+        ...
+        "Name": "cont-apache",
+        "EndpointID": "xxx",
+        "MacAddress": "02:42:ac:11:00:02",
+        "IPv4Address": "172.17.0.2/16",
+        ```
+        > different from host IP
+        ```shell
+        ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\  -f2
+        => 192.168.0.5
+        ```
+        - inspect `host`: `docker network inspect host | grep IPv4Address` => blank!
+        > ubuntu: `hostname -i | awk '{print $3}'`
+        > debian: `hostname -i`
+    1. #### hands-on
+        - exercise 1: busybox
+        ```shell
+        docker network create --subnet 192.168.1.0/24 nw-dotq-test
+        docker network ls
+        =>
+        NETWORK ID     NAME           DRIVER    SCOPE
+        b846fc14b4bf   nw-dotq-test   bridge    local
+        docker run -itd --name=cont-1(2) --network nw-dotq-test busybox
+        docker network inspect nw-dotq-test
+        =>
+        ...
+        "Containers": {
+            "xxx": {
+                "Name": "cont-1",
+                ...
+                "IPv4Address": "192.168.1.2/24",
+                "IPv6Address": ""
+            },
+            "yyy": {
+                "Name": "cont-2",
+                ...
+                "IPv4Address": "192.168.1.3/24",
+                "IPv6Address": ""
+            }
+        },
+        docker attach cont-1 # just only for "busybox"
+        @ ping 192.168.1.3
+        PING 192.168.1.3 (192.168.1.3): 56 data bytes
+        64 bytes from 192.168.1.3: seq=0 ttl=64 time=0.317 ms
+        ^C
+        --- 192.168.1.3 ping statistics ---
+        6 packets transmitted, 6 packets received, 0% packet loss
+        ```
+        - exercise 2: wordpress
+        ```shell
+        docker run --hostname=sv_db --name cont-mysql --network nw-dotq-test --env MYSQL_DATABASE=wp_db --env MYSQL_USER=wp_user --env MYSQL_PASSWORD=123456 --env MYSQL_ROOT_PASSWORD=123456 -d mysql
+        docker run --name cont-wordpress --network nw-dotq-test --env WORDPRESS_DB_HOST=sv_db --env WORDPRESS_DB_NAME=wp_db --env WORDPRESS_DB_USER=wp_user --env WORDPRESS_DB_PASSWORD=123456 -p 8089:80 -d wordpress
+        docker ps
+        =>
+        CONTAINER ID   IMAGE       COMMAND                  CREATED         STATUS         PORTS                  NAMES
+        45fde987c9a5   wordpress   "docker-entrypoint.s…"   4 seconds ago   Up 2 seconds   0.0.0.0:8089->80/tcp   cont-wordpress
+        867f50425b9d   mysql       "docker-entrypoint.s…"   2 minutes ago   Up 2 minutes   3306/tcp, 33060/tcp    cont-mysql
+        ```
+        - access `localhost:8089` on browser
+        ![wp_ok](screenshots/wp_ok.png)
+    1. #### troubleshooting
+        - access `localhost:8089` on browser: ERR "Error establishing a database connection"!!! (without `--hostname=sv_db`)
+        ![wp_err](screenshots/wp_err.png)
+        - debug NW:
+        1. docker network inspect nw-dotq-test => "cont-wordpress"=`192.168.1.3/24` & "cont-mysql"=`192.168.1.2/24`
+        2. docker exec -it 45fde987c9a5 bash
+        3. hostname -i => 192.168.1.3
+        4. install ping: apt update && apt install iputils-ping
+        5. ping 192.168.1.2 => OK
+        6. check the same with: `docker exec -it 867f50425b9d bash`
+        - debug wordpress container:
+        1.
+        ```shell
+        docker logs -f cont-wordpress | grep -E 'error|ERROR'
+        =>
+        WordPress not found in /var/www/html - copying now...
+        Complete! WordPress has been successfully copied to /var/www/html
+        No 'wp-config.php' found in /var/www/html, but 'WORDPRESS_...' variables supplied; copying 'wp-config-docker.php' (WORDPRESS_DB_PASSWORD)
+        AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 192.168.1.3. Set the 'ServerName' directive globally to suppress this message
+        AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 192.168.1.3. Set the 'ServerName' directive globally to suppress this message
+        [Tue Mar 29 05:51:26.937027 2022] [mpm_prefork:notice] [pid 1] AH00163: Apache/2.4.52 (Debian) PHP/7.4.28 configured -- resuming normal operations
+        [Tue Mar 29 05:51:26.937187 2022] [core:notice] [pid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+        ```
+        2. 
+        ```shell
+        cont-wordpress@ service apache2 status
+        =>
+        apache2 is running.
+        cont-wordpress@ cat /var/www/html/wp-config.php
+        =>
+        /** The name of the database for WordPress */
+        define( 'DB_NAME', getenv_docker('WORDPRESS_DB_NAME', 'wordpress') );
 
-    - inspect `host`: `docker network inspect host | grep IPv4Address` => blank!
+        /** Database username */
+        define( 'DB_USER', getenv_docker('WORDPRESS_DB_USER', 'example username') );
+
+        /** Database password */
+        define( 'DB_PASSWORD', getenv_docker('WORDPRESS_DB_PASSWORD', 'example password') );
+
+        /** Database hostname */
+        define( 'DB_HOST', getenv_docker('WORDPRESS_DB_HOST', 'mysql') );
+        ```
 
 ## note
  ```shell

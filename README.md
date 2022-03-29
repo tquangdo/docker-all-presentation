@@ -11,10 +11,11 @@
 ## definition
 1. ### image 
     - đơn vị cơ bản nhất, từ image tạo container
+    - các container share chung image. VD 10 containers cùng xài image MySQL thì chỉ pull về 1 image thôi
     - share image trên `hub.docker.com`
 1. ### container 
     - ý nghĩa giống 1 instance của máy ảo
-    - share resource cho nhau: VD 10 containers cùng xài Linux+MySQL+Nginx thì 3 resource này chỉ chiếm 1 lần chứ ko phải chiếm 10 lần trên bộ nhớ host! 
+    - share resource cho nhau: VD 10 containers cùng xài Linux+MySQL+Nginx thì chỉ chiếm resource cho 1 container chứ ko phải chiếm 10 containers trên bộ nhớ host! 
 1. ### container 
     - ý nghĩa giống S3 hay EFS
     - nếu KO xài volume thì xoá container sẽ mất all data!!! (stop/start OK)
@@ -209,6 +210,25 @@
         - access `localhost:8089/index.php` on browser
         ![compose](screenshots/compose.png)
 1. ### wordpress
+    - src code in folder `docker-compose/wordpress`
+    ```shell
+    docker-compose up -d --build
+    docker volume ls
+    =>
+    DRIVER    VOLUME NAME
+    local     wordpress_vol_db_data
+    docker network ls
+    =>
+    NETWORK ID     NAME                          DRIVER    SCOPE
+    db05f6fc483c   wordpress_nw_dotq_wordpress   bridge    local
+    docker ps
+    =>
+    CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS          PORTS                  NAMES
+    2c5a0f8a9d8f   wordpress   "docker-entrypoint.s…"   20 seconds ago   Up 19 seconds   0.0.0.0:8087->80/tcp   cont_wordpress
+    7c53b97e42fd   mysql       "docker-entrypoint.s…"   21 seconds ago   Up 20 seconds   3306/tcp, 33060/tcp    cont_mysql
+    ```
+    - access `localhost:8087` on browser
+    ![wp_dc](screenshots/wp_dc.png)
 
 ## volume & NW
 1. ### volume

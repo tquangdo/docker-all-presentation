@@ -1,0 +1,33 @@
+version: '3'
+services:
+  sv_wordpress:
+    image: wordpress
+    container_name: cont_wordpress
+    volumes:
+      # - "$PWD:/var/www/html" => mount all src code wordpress (Ex: wp_config/admin...) into "wordpress" folder
+      - "$PWD/ .docker/backup:/tmp/backup"
+      - "$PWD/ .docker/log:/tmp/log"
+    ports:
+      - 8087:80
+    depends_on:
+      - sv_db
+    environment:
+      WORDPRESS_DB_HOST: "sv_db:3306"
+    networks:
+      - nw_dotq_wordpress
+    env_file: .env
+
+  sv_db:
+    image: mysql
+    container_name: cont_mysql
+    volumes:
+      - "vol_db_data:/var/lib/mysql"
+    networks:
+      - nw_dotq_wordpress
+    env_file: .env
+
+volumes:
+  vol_db_data:
+
+networks:
+  nw_dotq_wordpress:

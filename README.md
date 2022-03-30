@@ -394,7 +394,66 @@
         1. ##### result
             - access `localhost:8083/students/hello` on browser => "Hello World!!!"
     1. #### docker-compose
-        1. ##### 
+        1. ##### deploy
+            - src code: all in repo
+        1. ##### deploy
+            ```shell
+            SpringBootDocker$ docker-compose up --build 
+            ```
+        1. ##### result
+            - check MySQL
+            ```shell
+            docker exec -it cont-mysql mysql -u root -p
+            Enter password: 
+            mysql> show databases;
+            +--------------------+
+            | Database           |
+            +--------------------+
+            | StudentManagement  |
+            | information_schema |
+            | mysql              |
+            | performance_schema |
+            | sys                |
+            +--------------------+
+            5 rows in set (0.01 sec)
+            mysql> use StudentManagement;
+            Database changed
+            mysql> show tables;
+            +-----------------------------+
+            | Tables_in_StudentManagement |
+            +-----------------------------+
+            | tblStudent                  |
+            +-----------------------------+
+            1 row in set (0.01 sec)
+            mysql> select * from tblStudent;
+            Empty set (0.00 sec)
+            mysql> desc tblStudent;
+            +-----------+--------------+------+-----+---------+----------------+
+            | Field     | Type         | Null | Key | Default | Extra          |
+            +-----------+--------------+------+-----+---------+----------------+
+            | id        | int          | NO   | PRI | NULL    | auto_increment |
+            | birthYear | int          | YES  |     | NULL    |                |
+            | name      | varchar(255) | YES  |     | NULL    |                |
+            +-----------+--------------+------+-----+---------+----------------+
+            3 rows in set (0.01 sec)
+            ```
+            - access `localhost:8098/students/showAllStudents` on browser
+            ```json
+            []
+            ```
+            - POST API `localhost:8098/students/insertStudent`
+            ---
+            ![insertStudent](screenshots/insertStudent.png)
+            - access `localhost:8098/students/showAllStudents` again
+            ```json
+            [
+                {
+                    id: 1,
+                    name: "DoTQ",
+                    birthYear: 1985
+                }
+            ]
+            ```
 
 ## volume & NW
 1. ### volume

@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  sv-mysql:
+    image: mysql
+    container_name: cont-mysql
+    ports:
+      - 3310:3306
+    volumes:
+      - vol-mysql-data:/var/lib/mysql
+      - vol-mysql-config-deamond:/etc/mysql/conf.d
+    networks:
+      - nw-backend
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: StudentManagement
+  sv-springboot:
+    build: .
+    container_name: cont-springboot
+    ports:
+      - 8098:8083
+    volumes:
+      - ./:/app
+    networks:
+      - nw-backend
+#create network     
+networks:
+  nw-backend:
+    name: nw-springboot-docker
+volumes:
+  vol-mysql-data:
+  vol-mysql-config-deamond:

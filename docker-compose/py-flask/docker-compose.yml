@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  sv-py-flask:
+    build: .
+    container_name: cont-py-flask
+    ports:
+      - 5002:5000
+    volumes:
+      - ./:/app
+    networks:
+      - nw-flask-mysql
+
+  sv-mysql:
+    image: mysql
+    container_name: cont-mysql
+    ports:
+      - 3309:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+    volumes:
+      - vol-mysql:/var/lib/mysql
+      - vol-mysql-config:/etc/mysql
+    networks:
+      - nw-flask-mysql
+
+networks:
+  nw-flask-mysql:
+    name: nw-flask-mysql
+volumes:
+  vol-mysql:
+  vol-mysql-config:

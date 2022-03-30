@@ -5,9 +5,6 @@
 ![Forks](https://img.shields.io/github/forks/tquangdo/docker-all-presentation?color=f05340)
 [![Report an issue](https://img.shields.io/badge/Support-Issues-green)](https://github.com/tquangdo/docker-all-presentation/issues/new)
 
-## reference
-[tinhocthatladongian](https://www.youtube.com/watch?v=q3Vhi_MvUsQ&list=PLjCpH2Qpki-sTjdlYXE8AifSKQFa8ZL23&index=27)
-
 ## definition
 1. ### image 
     - đơn vị cơ bản nhất, từ image tạo container
@@ -20,9 +17,12 @@
     - ý nghĩa giống S3 hay EFS
     - nếu KO xài volume thì xoá container sẽ mất all data!!! (stop/start OK)
 
+## reference
+[tinhocthatladongian](https://www.youtube.com/watch?v=q3Vhi_MvUsQ&list=PLjCpH2Qpki-sTjdlYXE8AifSKQFa8ZL23&index=27)
+
 ## overall
 1. ### run other image in docker hub
-    1. #### by run/container run (OK)
+    1. #### by run/container run official image
         - `docker run --name cont-mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql` => connect OK by Workbench
         - `docker run --name cont-apache -p 8081:80 -d httpd` => connect OK by `localhost:8081` on browser
         ```shell
@@ -31,35 +31,32 @@
         => 
         <html><body><h1>It works!</h1></body></html>
         ```
-    1. #### by run privileged (OK)
+    1. #### by run privileged hub's image
         - run privileged
         ```shell
-        docker run --privileged -d -p 8080:80 tinhocthatladongian/project01  /sbin/init 
+        docker run --privileged -d -p 8080:80 tinhocthatladongian/project01 
         =>
         Unable to find image 'tinhocthatladongian/project01:latest' locally
         docker: Error response from daemon: manifest for tinhocthatladongian/project01:latest not found: manifest unknown: manifest unknown.
         ```
         - search `tinhocthatladongian/project01` on `hub.docker.com` -> latest tags=`v2`
         ```shell
-        docker run --privileged -d -p 8080:80 tinhocthatladongian/project01:v2  /sbin/init 
+        docker run --privileged -d -p 8080:80 tinhocthatladongian/project01:v2 # NOT missing of "-p 8080:80" 
         docker ps
         =>
         CONTAINER ID   IMAGE                              COMMAND        CREATED          STATUS          PORTS                  NAMES
         7104e869d2cf   tinhocthatladongian/project01:v2   "/sbin/init"   37 seconds ago   Up 36 seconds   0.0.0.0:8080->80/tcp   tender_jones
         ```
-    1. #### by pull (NG!!!)
+        - access `localhost:8080` on browser
+        ![localhost](screenshots/localhost.png)
+        > if NOT have `privileged` will ERR on browser
         ```shell
-        docker pull tinhocthatladongian/project01:v2
-        docker images => GET image_id (Ex: `d4198267234f`)
-        docker run -d --name cont-nginx-demo -p 8080:80 d4198267234f
         docker exec -it <container_id> bash
         systemctl status httpd
         =>
         Failed to get D-Bus connection: Operation not permitted
         ```
     1. #### edit HTML
-        - access `localhost:8080` on browser
-        ![localhost](screenshots/localhost.png)
         - edit container
         ```shell
         docker exec -it 7104e869d2cf bash
@@ -129,20 +126,13 @@
         docker run -d --name cont-nginx-demo -p 8080:80 img-nginx-demo:v1
         docker ps # will see "cont-nginx-demo"
         ```
-        > change tag name
+        > change tag(image) name
         > `docker build -t img-nginx-demo .`
         > `docker tag img-nginx-demo:latest img-nginx-demo:v1`
         > `docker rmi img-nginx-demo:latest`
         - access `localhost:8080` on browser -> "DTQ!!!"
     1. #### push docker hub
-        1. ##### create new repo in docker hub
-            - create repo `dockrepo-nginx-demo` in docker hub
-            ```shell
-            docker tag img-nginx-demo:v1 jwmagazineeas/dockrepo-nginx-demo:v1
-            docker push jwmagazineeas/dockrepo-nginx-demo:v1
-            ```
-            ![pushv1](screenshots/pushv1.png)
-        1. ##### NO need to create new repo in docker hub
+        1. ##### commit
             ```shell
             docker ps
             =>
@@ -154,6 +144,11 @@
             jwmagazineeas/dockrepo-nginx-del    1.0       27fe34b66905   21 seconds ago   142MB
             docker commit -m "test docker commit CMD" -a "DoTQ" 0509bea79b68 jwmagazineeas/dockrepo-nginx-del:1.0
             > check comment & author by: `docker inspect 27fe34b66905 | grep -E 'Author|Comment'`
+            ```
+        1. ##### NO need to create new repo in docker hub
+            ```shell
+            # if NOT exist image yet:
+            # docker build -t jwmagazineeas/dockrepo-nginx-del:1.0 .
             docker push jwmagazineeas/dockrepo-nginx-del:1.0
             ```
             - will auto create repo `dockrepo-nginx-del` in docker hub
@@ -191,48 +186,215 @@
         - delete containers & images
 
 ## docker-compose
-1. ### apache & phpinfo
-    1. ### reference
-        [example-voting-app](https://github.com/dockersamples/example-voting-app)
-        - change code FROM port `5000` TO `5005` (because macOS use default `5000` for other purpose)
-        ```shell
-        docker-compose up --build
-        =>
-        ...
-        Creating example-voting-app_redis_1 ... done
-        Creating example-voting-app_db_1    ... done
-        Creating example-voting-app_vote_1   ... done
-        Creating example-voting-app_worker_1 ... done
-        Creating example-voting-app_result_1 ... done
-        ```
-        - access `localhost:5005` for voting & `localhost:5001` for result
-        ![vote](screenshots/vote.png)
-    1. ### src code
-        - `docker-compose/docker-compose.yml` & `docker-compose/Dockerfile`
-        - ⚠️⚠️⚠️ IMPORTANT ⚠️⚠️⚠️: due to httpd, MUST expose port=`80` in `Dockerfile`, otherwise will ERR "Failed to get D-Bus connection"
-    1. ### run
-        - access `localhost:8089/index.php` on browser
-        ![compose](screenshots/compose.png)
-1. ### wordpress
-    - src code in folder `docker-compose/wordpress`
+1. ### vote app reference
+    [example-voting-app](https://github.com/dockersamples/example-voting-app)
+    - change code FROM port `5000` TO `5005` (because macOS use default `5000` for other purpose)
     ```shell
-    docker-compose up -d --build
-    docker volume ls
+    docker-compose up --build
     =>
-    DRIVER    VOLUME NAME
-    local     wordpress_vol_db_data
-    docker network ls
-    =>
-    NETWORK ID     NAME                          DRIVER    SCOPE
-    db05f6fc483c   wordpress_nw_dotq_wordpress   bridge    local
-    docker ps
-    =>
-    CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS          PORTS                  NAMES
-    2c5a0f8a9d8f   wordpress   "docker-entrypoint.s…"   20 seconds ago   Up 19 seconds   0.0.0.0:8087->80/tcp   cont_wordpress
-    7c53b97e42fd   mysql       "docker-entrypoint.s…"   21 seconds ago   Up 20 seconds   3306/tcp, 33060/tcp    cont_mysql
+    ...
+    Creating example-voting-app_redis_1 ... done
+    Creating example-voting-app_db_1    ... done
+    Creating example-voting-app_vote_1   ... done
+    Creating example-voting-app_worker_1 ... done
+    Creating example-voting-app_result_1 ... done
     ```
-    - access `localhost:8087` on browser
-    ![wp_dc](screenshots/wp_dc.png)
+    - access `localhost:5005` for voting & `localhost:5001` for result
+    ![vote](screenshots/vote.png)
+1. ### apache
+    - src code in folder `docker-compose/php`
+    - ⚠️⚠️⚠️ IMPORTANT ⚠️⚠️⚠️: due to `yum -y install httpd` in `Dockerfile`, MUST use port=`80` in `docker-compose.yml`, otherwise will ERR "Failed to get D-Bus connection"
+    ```yml
+    ports:
+        - "8089:80"
+    ```
+1. ### wordpress
+    1. #### deploy
+        - src code in folder `docker-compose/wordpress`
+        ```shell
+        docker-compose up -d --build
+        docker volume ls
+        =>
+        DRIVER    VOLUME NAME
+        local     wordpress_vol_db_data
+        docker network ls
+        =>
+        NETWORK ID     NAME                          DRIVER    SCOPE
+        db05f6fc483c   wordpress_nw_dotq_wordpress   bridge    local
+        docker ps
+        =>
+        CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS          PORTS                  NAMES
+        2c5a0f8a9d8f   wordpress   "docker-entrypoint.s…"   20 seconds ago   Up 19 seconds   0.0.0.0:8087->80/tcp   cont_wordpress
+        7c53b97e42fd   mysql       "docker-entrypoint.s…"   21 seconds ago   Up 20 seconds   3306/tcp, 33060/tcp    cont_mysql
+        ```
+    1. #### result
+        - access `localhost:8087` on browser
+        ![wp_dc](screenshots/wp_dc.png)
+        - access MySQL
+        ```shell
+        docker exec -it cont_mysql mysql -u root -p
+        Enter password: 
+        ...
+        mysql> show databases;
+        +--------------------+
+        | Database           |
+        +--------------------+
+        | information_schema |
+        | mysql              |
+        | performance_schema |
+        | sys                |
+        | wp_db              |
+        +--------------------+
+        5 rows in set (0.00 sec)
+        mysql> use wp_db;
+        Database changed
+        mysql> show tables;
+        Empty set (0.00 sec)
+        ```
+1. ### flask
+    1. ### reference
+        [hoangnd](https://www.youtube.com/watch?v=x5UIe7quicQ&list=PLWBrqglnjNl3TDF6WKpAl4maE3yJ5CpYF&index=12)
+    1. #### check environment
+        ```shell
+        pip3 freeze | grep Flask
+        => Flask==2.0.2
+        ```
+        - copy "Flask==2.0.2" into `docker-compose/py-flask/requirements.txt`
+        ```shell
+        pip3 install mysql-connector-python
+        pip3 freeze | grep mysql-connector-python
+        => mysql-connector-python==8.0.28
+        ```
+        - copy into `docker-compose/py-flask/requirements.txt`
+    1. #### local (initial)
+        1. ##### src code
+            - only `docker-compose/py-flask/app.py` & `docker-compose/py-flask/requirements.txt`
+            ```py
+            @app.route('/')
+            def hello_world():
+                return 'Hello World !!!'
+            ```
+        1. ##### deploy
+            ```shell
+            python3 -m flask run
+            * Environment: production
+            ...
+            * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+            127.0.0.1 - - [30/Mar/2022 19:50:20] "GET / HTTP/1.1" 200 -
+            ```
+        1. ##### result
+            - access `localhost:5000` on browser => will see "Hello World !!!"
+    1. #### docker-compose
+        1. ##### deploy
+            - src code: all in repo
+        1. ##### deploy
+            ```shell
+            py-flask$ docker-compose up --build 
+            ```
+        1. ##### result
+            - access `localhost:5002/products` on browser => will ERR "Internal Server Error"
+            - in logs will see: "cont-py-flask  | mysql.connector.errors.ProgrammingError: 1049 (42000): Unknown database 'ProductManagement'"
+            - access `localhost:5002/initdb` => will see "init Database"
+            - access `localhost:5002/init_tables` => will see "init_tables"
+            - access `localhost:5002/products` again => will see "[]"
+            ```shell
+            docker exec -it cont-mysql mysql -u root -p
+            Enter password: 
+            ...
+            mysql> show databases;
+            +--------------------+
+            | Database           |
+            +--------------------+
+            | ProductManagement  |
+            | information_schema |
+            | mysql              |
+            | performance_schema |
+            | sys                |
+            +--------------------+
+            5 rows in set (0.00 sec)
+            mysql> use ProductManagement
+            Database changed
+            mysql> show tables;
+            +-----------------------------+
+            | Tables_in_ProductManagement |
+            +-----------------------------+
+            | tblProduct                  |
+            +-----------------------------+
+            1 row in set (0.00 sec)
+            mysql> select * from tblProduct;
+            Empty set (0.00 sec)
+            ```
+            - insert records into `tblProduct`
+            ```sql
+            INSERT INTO tblProduct(name, description) VALUES
+                -> ('macboook pro m1', 'please buy'),
+                -> ('iphone 13', 'please buy and buy');
+            Query OK, 2 rows affected (0.02 sec)
+            Records: 2  Duplicates: 0  Warnings: 0
+
+            mysql> select * from tblProduct;
+            +----+-----------------+--------------------+
+            | id | name            | description        |
+            +----+-----------------+--------------------+
+            |  1 | macboook pro m1 | please buy         |
+            |  2 | iphone 13       | please buy and buy |
+            +----+-----------------+--------------------+
+            2 rows in set (0.00 sec)
+            ```
+            - access `localhost:5002/products` again
+            ```json
+            [
+                {
+                    id: 1,
+                    name: "macboook pro m1",
+                    description: "please buy"
+                },
+                {
+                    id: 2,
+                    name: "iphone 13",
+                    description: "please buy and buy"
+                }
+            ]
+            ```
+1. ### springboot
+    1. #### initial (local)
+        1. ##### src code
+            - folder `docker-compose/SpringBootDocker`
+            ![initial_sb](screenshots/initial_sb.png)
+            - `docker-compose/SpringBootDocker/pom.xml` cmt out `spring-boot-starter-data-jpa` & `mysql-connector-java`
+            - `docker-compose/SpringBootDocker/src/main/resources/application.properties` add `server.port=8083`
+        1. ##### deploy
+            ```shell
+            SpringBootDocker$ ./mvnw spring-boot:run
+            =>
+            ...
+            2022-03-30 23:13:17.990  INFO 70883 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8083 (http) with context path ''
+            ```
+        1. ##### result
+            - access `localhost:8083` on browser
+            ![8083_sb](screenshots/8083_sb.png)
+    1. #### GET API (local)
+        1. ##### src code
+            - `docker-compose/SpringBootDocker/src/main/java/com/example/SpringBootDocker/controllers/StudentController.java`:
+            ```java
+            @RestController
+            @RequestMapping(path = "students")
+            public class StudentController {
+                // http://localhost:8083/students/hello
+                @RequestMapping(value = "/hello", method = RequestMethod.GET)
+                public String hello(ModelMap modelMap) {
+                    return "Hello World!!!";
+                }
+            }
+            ```
+        1. ##### deploy
+            ```shell
+            SpringBootDocker$ ./mvnw spring-boot:run # need to stop > rerun to reflect
+            ```
+        1. ##### result
+            - access `localhost:8083/students/hello` on browser => "Hello World!!!"
+    1. #### docker-compose
+        1. ##### 
 
 ## volume & NW
 1. ### volume
@@ -411,3 +573,4 @@
  ```shell
 docker rm -f $(docker ps -a -q) && docker rmi -f $(docker images -a -q) && docker volume rm $(docker volume ls)
 ```
+

@@ -16,7 +16,7 @@
 1. ### container 
     - ý nghĩa giống 1 instance của máy ảo
     - share resource cho nhau: VD 10 containers cùng xài Linux+MySQL+Nginx thì chỉ chiếm resource cho 1 container chứ ko phải chiếm 10 containers trên bộ nhớ host! 
-1. ### container 
+1. ### volume 
     - ý nghĩa giống S3 hay EFS
     - nếu KO xài volume thì xoá container sẽ mất all data!!! (stop/start OK)
 
@@ -129,6 +129,10 @@
         docker run -d --name cont-nginx-demo -p 8080:80 img-nginx-demo:v1
         docker ps # will see "cont-nginx-demo"
         ```
+        > change tag name
+        > `docker build -t img-nginx-demo .`
+        > `docker tag img-nginx-demo:latest img-nginx-demo:v1`
+        > `docker rmi img-nginx-demo:latest`
         - access `localhost:8080` on browser -> "DTQ!!!"
     1. #### push docker hub
         1. ##### create new repo in docker hub
@@ -350,8 +354,8 @@
         ```
         - exercise 2: wordpress
         ```shell
-        docker run --hostname=sv_db --name cont-mysql --network nw-dotq-test --env MYSQL_DATABASE=wp_db --env MYSQL_USER=wp_user --env MYSQL_PASSWORD=123456 --env MYSQL_ROOT_PASSWORD=123456 -d mysql
-        docker run --name cont-wordpress --network nw-dotq-test --env WORDPRESS_DB_HOST=sv_db --env WORDPRESS_DB_NAME=wp_db --env WORDPRESS_DB_USER=wp_user --env WORDPRESS_DB_PASSWORD=123456 -p 8089:80 -d wordpress
+        docker run --hostname=sv_db --name cont-mysql --network nw-dotq-test -e MYSQL_DATABASE=wp_db -e MYSQL_USER=wp_user -e MYSQL_PASSWORD=123456 -e MYSQL_ROOT_PASSWORD=123456 -d mysql
+        docker run --name cont-wordpress --network nw-dotq-test -e WORDPRESS_DB_HOST=sv_db -e WORDPRESS_DB_NAME=wp_db -e WORDPRESS_DB_USER=wp_user -e WORDPRESS_DB_PASSWORD=123456 -p 8089:80 -d wordpress
         docker ps
         =>
         CONTAINER ID   IMAGE       COMMAND                  CREATED         STATUS         PORTS                  NAMES

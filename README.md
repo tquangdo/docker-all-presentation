@@ -40,6 +40,29 @@ ls -lah /var/run/docker.sock /var/tmp/docker.sock
 1. ### run other image in docker hub
     1. #### by run/container run official image
         - `docker run --name cont-mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql` => connect OK by Workbench
+        - `docker run --name cont-postgres -e POSTGRES_PASSWORD=123456 -p 5432:5432 -d postgres` => connect OK by DBeaver:
+        - 1/ `docker exec -ti cont-postgres psql -U postgres`
+        - 2/
+        ```shell
+        postgres-# \l+
+        SELECT datname FROM pg_database;
+        # datname  
+        # -----------
+        # postgres
+        # template1
+        # template0
+        # (3 rows)
+        SET search_path TO public;
+        SHOW search_path;
+        # search_path 
+        # -------------
+        # public
+        # (1 row)
+        select * from tab_dtq;
+        # uid | name 
+        # -----+------
+        # 123 | dotq
+        ```
         - `docker run --name cont-apache -p 8081:80 -d httpd` => connect OK by `localhost:8081` on browser
         ```shell
         docker exec -it da517a963ef1 bash
@@ -648,4 +671,3 @@ ls -lah /var/run/docker.sock /var/tmp/docker.sock
  ```shell
 docker rm -f $(docker ps -a -q) && docker rmi -f $(docker images -a -q) && docker volume rm $(docker volume ls)
 ```
-

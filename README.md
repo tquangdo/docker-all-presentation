@@ -44,7 +44,9 @@ ls -lah /var/run/docker.sock /var/tmp/docker.sock
         - 1/ `docker exec -ti cont-postgres psql -U postgres`
         - 2/
         ```shell
+        # A)
         postgres-# \l+
+        # B)
         SELECT datname FROM pg_database;
         # datname  
         # -----------
@@ -52,16 +54,25 @@ ls -lah /var/run/docker.sock /var/tmp/docker.sock
         # template1
         # template0
         # (3 rows)
+        # C)
         SET search_path TO public;
         SHOW search_path;
         # search_path 
         # -------------
         # public
         # (1 row)
+        # D)
         select * from tab_dtq;
         # uid | name 
         # -----+------
         # 123 | dotq
+        # E)
+        create table tab_dtq1(id int primary key, title varchar(64), summary varchar(64), description varchar(64));
+        \dt
+        # List of relations
+        # Schema |   Name   | Type  |  Owner   
+        # -------+----------+-------+----------
+        # public | tab_dtq1 | table | postgres
         ```
         - `docker run --name cont-apache -p 8081:80 -d httpd` => connect OK by `localhost:8081` on browser
         ```shell

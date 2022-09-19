@@ -17,6 +17,22 @@
     - ý nghĩa giống S3 hay EFS
     - nếu KO xài volume thì xoá container sẽ mất all data!!! (stop/start OK)
 
+## configure docker env
+```shell
+docker --version
+# Docker version 20.10.17, build 100c701
+docker-compose --version
+# Docker Compose version v2.10.2
+```
+> if `docker ps -a` occur ERR `Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?` then:
+- wait until occur DLG "need privileged"
+- then check:
+```shell
+ls -lah /var/run/docker.sock /var/tmp/docker.sock
+# ls: /var/tmp/docker.sock: No such file or directory
+# lrwxr-xr-x  1 root  daemon    43B Sep 19 15:19 /var/run/docker.sock -> /Users/do.tranquang/.docker/run/docker.sock
+```
+
 ## reference
 [tinhocthatladongian](https://www.youtube.com/watch?v=q3Vhi_MvUsQ&list=PLjCpH2Qpki-sTjdlYXE8AifSKQFa8ZL23&index=27)
 
